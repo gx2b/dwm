@@ -18,6 +18,7 @@
 #include "swallow.c"
 #include "swapfocus.c"
 #include "tagallmon.c"
+#include "tagothermonitor.c"
 #include "tagswapmon.c"
 #include "vanitygaps.c"
 #include "winview.c"
