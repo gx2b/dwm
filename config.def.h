@@ -14,6 +14,7 @@ static const int vertpad                 = 10;  /* vertical padding of bar */
 static const int sidepad                 = 10;  /* horizontal padding of bar */
 static const int horizpadbar             = 2;   /* horizontal padding for statusbar */
 static const int vertpadbar              = 0;   /* vertical padding for statusbar */
+static const char buttonbar[]            = "<O>";
 static const char *fonts[]               = { "monospace:size=10" };
 static const char dmenufont[]            = "monospace:size=10";
 
@@ -128,7 +129,6 @@ static Signal signals[] = {
 	{ "shiftview",               shiftview },
 	{ "shiftviewclients",        shiftviewclients },
 	{ "togglesticky",            togglesticky },
-	{ "setborderpx",             setborderpx },
 	{ "cyclelayout",             cyclelayout },
 	{ "toggleviewex",            toggleviewex },
 	{ "tag",                     tag },
@@ -305,9 +305,10 @@ static Key keys[] = {
 
 
 /* button definitions */
-/* click can be ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
+/* click can be ClkButton, ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
 static Button buttons[] = {
 	/* click                event mask           button          function        argument */
+	{ ClkButton,            0,                   Button1,        spawn,          {.v = dmenucmd } },
 	{ ClkLtSymbol,          0,                   Button1,        setlayout,      {0} },
 	{ ClkLtSymbol,          0,                   Button3,        setlayout,      {.v = &layouts[2]} },
 	{ ClkWinTitle,          0,                   Button2,        zoom,           {0} },

@@ -64,7 +64,12 @@
 #define TEXTW(X)                (drw_fontset_getwidth(drw, (X)) + lrpad)
 
 /* enums */
-enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
+enum {
+	CurNormal,
+	CurResize,
+	CurMove,
+	CurLast
+}; /* cursor */
 
 enum {
 	SchemeNorm
@@ -78,9 +83,25 @@ enum {
 	NetClientList, NetLast
 }; /* EWMH atoms */
 
-enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMWindowRole, WMLast }; /* default atoms */
-enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
-       ClkClientWin, ClkRootWin, ClkLast }; /* clicks */
+enum {
+	WMProtocols,
+	WMDelete,
+	WMState,
+	WMTakeFocus,
+	WMWindowRole,
+	WMLast
+}; /* default atoms */
+
+enum {
+	ClkButton,
+	ClkTagBar,
+	ClkLtSymbol,
+	ClkStatusText,
+	ClkWinTitle,
+	ClkClientWin,
+	ClkRootWin,
+	ClkLast
+}; /* clicks */
 
 typedef union {
 	int i;
@@ -513,6 +534,10 @@ buttonpress(XEvent *e)
 	}
 	if (ev->window == selmon->barwin) {
 		i = x = 0;
+		x += TEXTW(buttonbar);
+		if (ev->x < x) {
+			click = ClkButton;
+		} else {
 		do {
 			x += TEXTW(tags[i]);
 		} while (ev->x >= x && ++i < LENGTH(tags));
@@ -549,6 +574,7 @@ buttonpress(XEvent *e)
 		}
 		else
 			click = ClkWinTitle;
+		}
 	} else if ((c = wintoclient(ev->window))) {
 		focus(c);
 		restack(selmon);
@@ -902,6 +928,9 @@ drawbar(Monitor *m)
 			urg |= c->tags;
 	}
 	x = 0;
+	w = TEXTW(buttonbar);
+	drw_setscheme(drw, scheme[SchemeNorm]);
+	x = drw_text(drw, x, 0, w, bh, lrpad / 2, buttonbar, 0);
 	for (i = 0; i < LENGTH(tags); i++) {
 		invert = urg & 1 << i;
 		w = TEXTW(tags[i]);
@@ -1274,6 +1303,7 @@ manage(Window w, XWindowAttributes *wa)
 	XConfigureWindow(dpy, w, CWBorderWidth, &wc);
 	XSetWindowBorder(dpy, w, scheme[SchemeNorm][ColBorder].pixel);
 	configure(c); /* propagates border_width, if size doesn't change */
+	updatesizehints(c);
 	if (getatomprop(c, netatom[NetWMState]) == netatom[NetWMFullscreen])
 		setfullscreen(c, 1);
 	updatewmhints(c);
