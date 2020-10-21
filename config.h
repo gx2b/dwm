@@ -2,19 +2,19 @@
 
 /* appearance */
 static const unsigned int borderpx       = 2;   /* border pixel of windows */
-static const unsigned int snap           = 4;   /* snap pixel */
-static const unsigned int gappih         = 4;  /* horiz inner gap between windows */
-static const unsigned int gappiv         = 4;  /* vert inner gap between windows */
+static const unsigned int snap           = 8;   /* snap pixel */
+static const unsigned int gappih         = 2;  /* horiz inner gap between windows */
+static const unsigned int gappiv         = 2;  /* vert inner gap between windows */
 static const unsigned int gappoh         = 4;  /* horiz outer gap between windows and screen edge */
-static const unsigned int gappov         = 6;  /* vert outer gap between windows and screen edge */
+static const unsigned int gappov         = 4;  /* vert outer gap between windows and screen edge */
 static const int smartgaps               = 0;   /* 1 means no outer gap when there is only one window */
 static const int showbar                 = 1;   /* 0 means no bar */
 static const int topbar                  = 1;   /* 0 means bottom bar */
 static const char buttonbar[]            = "📪";
-static const int vertpad                 = 4;  /* vertical padding of bar */
-static const int sidepad                 = 16;  /* horizontal padding of bar */
+static const int vertpad                 = 2;  /* vertical padding of bar */
+static const int sidepad                 = 2;  /* horizontal padding of bar */
 static const int horizpadbar             = 2;   /* horizontal padding for statusbar */
-static const int vertpadbar              = 0;   /* vertical padding for statusbar */
+static const int vertpadbar              = 2;   /* vertical padding for statusbar */
 //static const char *fonts[]             = { "monospace:size=10" };
 //static const char dmenufont[]          = "monospace:size=10";
 static const char *fonts[]               = { "monospace:size=12", "JoyPixels:pixelsize=18:antialias=true:autohint=true" };
@@ -98,14 +98,17 @@ static const Rule rules[] = {
     //    WM_NAME(STRING) = title
     //    WM_WINDOW_ROLE(STRING) = role
     //
-    // class      role      instance    title      wtype  tags mask    isfloating   isterminal  noswallow  monitor
-    { "Gimp",     NULL,     NULL,       NULL,      NULL,   0,           1,           0,          0,         -1 },
-    { "Firefox",  NULL,     NULL,       NULL,      NULL,   1 << 8,      0,           0,          0,         -1 },
-    { "St",       NULL,     NULL,       NULL,      NULL,   0,           0,           1,          0,         -1 },
-    { NULL,       NULL,     NULL,  "Event Tester", NULL,   0,           0,           0,          1,         -1 },   // xev
-    { NULL,       NULL,     "spterm",   NULL,      NULL,   SPTAG(0),    1,           1,          0,         -1 },
-    { NULL,       NULL,     "spfm",     NULL,      NULL,   SPTAG(1),    1,           1,          0,         -1 },
-    { NULL,       NULL,     "spcalc",   NULL,      NULL,   SPTAG(2),    1,           1,          0,         -1 },
+    // class                role      instance    title      wtype  tags mask    isfloating   isterminal  noswallow  monitor
+    { "Gimp",               NULL,     NULL,       NULL,      NULL,   0,           1,           0,          0,         -1 },
+    { "firefox",            NULL,     NULL,       NULL,      NULL,   1 << 3,      0,           0,          0,         -1 },
+    { "Chromium",           NULL,     NULL,       NULL,      NULL,   1 << 3,      0,           0,          0,         -1 },
+    { "St",                 NULL,     NULL,       NULL,      NULL,   0,           0,           1,          0,         -1 },
+    { NULL,                 NULL,     NULL,  "Event Tester", NULL,   0,           0,           0,          1,         -1 },   // xev
+    { "VirtualBox Manager", NULL,     NULL,       NULL,      NULL,   1 << 6,      1,           0,          0,          0 },
+    { "VirtualBox Machine", NULL,     NULL,       NULL,      NULL,   1 << 7,      1,           0,          0,          0 },
+    { NULL,                 NULL,     "spterm",   NULL,      NULL,   SPTAG(0),    1,           1,          0,         -1 },
+    { NULL,                 NULL,     "spfm",     NULL,      NULL,   SPTAG(1),    1,           1,          0,         -1 },
+    { NULL,                 NULL,     "spcalc",   NULL,      NULL,   SPTAG(2),    1,           1,          0,         -1 },
 };
 
 static const MonitorRule monrules[] = {
@@ -207,7 +210,7 @@ static const Layout layouts[] = {
     /* symbol     arrange function, { nmaster, nstack, layout, master axis, stack axis, secondary stack axis } */
     /* -SPLIT_VERTICAL = Mirror */
     { "[]=",      flextile,         { -1, -1, -SPLIT_VERTICAL, TOP_TO_BOTTOM, TOP_TO_BOTTOM, 0, NULL } }, // default tile layout
-     { "><>",      NULL,             {0} },    /* no layout function means floating behavior */
+    { "><>",      NULL,             {0} },    /* no layout function means floating behavior */
     { "[M]",      flextile,         { -1, -1, NO_SPLIT, MONOCLE, 0, 0, NULL } }, // monocle
     { "|||",      flextile,         { -1, -1, -SPLIT_VERTICAL, LEFT_TO_RIGHT, TOP_TO_BOTTOM, 0, NULL } }, // columns (col) layout
     { ">M>",      flextile,         { -1, -1, FLOATING_MASTER, LEFT_TO_RIGHT, LEFT_TO_RIGHT, 0, NULL } }, // floating master
@@ -217,8 +220,8 @@ static const Layout layouts[] = {
 	//{ "|M|",      flextile,         { -1, -1, SPLIT_HORIZONTAL, LEFT_TO_RIGHT, TOP_TO_BOTTOM, 0, monoclesymbols } }, // centeredmaster
 	{ "|M|",      flextile,         { -1, -1, SPLIT_CENTERED_VERTICAL, TOP_TO_BOTTOM, TOP_TO_BOTTOM, TOP_TO_BOTTOM, NULL } }, // centeredmaster
     { ":::",      flextile,         { -1, -1, NO_SPLIT, GAPPLESSGRID, 0, 0, NULL } }, // gappless grid
-    { "[\\]",     flextile,         { -1, -1, NO_SPLIT, DWINDLE, 0, 0, NULL } }, // fibonacci dwindle
-    { "(@)",      flextile,         { -1, -1, NO_SPLIT, SPIRAL, 0, 0, NULL } }, // fibonacci spiral
+//    { "[\\]",     flextile,         { -1, -1, NO_SPLIT, DWINDLE, 0, 0, NULL } }, // fibonacci dwindle
+//    { "(@)",      flextile,         { -1, -1, NO_SPLIT, SPIRAL, 0, 0, NULL } }, // fibonacci spiral
     { NULL,       NULL,             {0} },
 };
 
@@ -407,29 +410,27 @@ static Key keys[] = {
     { 0, XF86XK_MonBrightnessDown,   spawn,        SHCMD("xbacklight -dec 15") },
 
     //---- inner/outer gaps:  not needed!
-    /*
     { MODKEY|Mod1Mask,              XK_i,          incrigaps,              {.i = +1 } },
     { MODKEY|Mod1Mask|ShiftMask,    XK_i,          incrigaps,              {.i = -1 } },
     { MODKEY|Mod1Mask,              XK_o,          incrogaps,              {.i = +1 } },
     { MODKEY|Mod1Mask|ShiftMask,    XK_o,          incrogaps,              {.i = -1 } },
-    { MODKEY|Mod1Mask,              XK_6,          incrihgaps,             {.i = +1 } },
-    { MODKEY|Mod1Mask|ShiftMask,    XK_6,          incrihgaps,             {.i = -1 } },
-    { MODKEY|Mod1Mask,              XK_7,          incrivgaps,             {.i = +1 } },
-    { MODKEY|Mod1Mask|ShiftMask,    XK_7,          incrivgaps,             {.i = -1 } },
-    { MODKEY|Mod1Mask,              XK_8,          incrohgaps,             {.i = +1 } },
-    { MODKEY|Mod1Mask|ShiftMask,    XK_8,          incrohgaps,             {.i = -1 } },
-    { MODKEY|Mod1Mask,              XK_9,          incrovgaps,             {.i = +1 } },
-    { MODKEY|Mod1Mask|ShiftMask,    XK_9,          incrovgaps,             {.i = -1 } },
-    { MODKEY|Mod1Mask|ShiftMask,    XK_0,          defaultgaps,            {0} },
-    */
+    { MODKEY|Mod1Mask,              XK_q,          incrihgaps,             {.i = +1 } },
+    { MODKEY|Mod1Mask|ShiftMask,    XK_q,          incrihgaps,             {.i = -1 } },
+    { MODKEY|Mod1Mask,              XK_w,          incrivgaps,             {.i = +1 } },
+    { MODKEY|Mod1Mask|ShiftMask,    XK_w,          incrivgaps,             {.i = -1 } },
+    { MODKEY|Mod1Mask,              XK_e,          incrohgaps,             {.i = +1 } },
+    { MODKEY|Mod1Mask|ShiftMask,    XK_e,          incrohgaps,             {.i = -1 } },
+    { MODKEY|Mod1Mask,              XK_t,          incrovgaps,             {.i = +1 } },
+    { MODKEY|Mod1Mask|ShiftMask,    XK_t,          incrovgaps,             {.i = -1 } },
+    { MODKEY|Mod1Mask|ShiftMask,    XK_g,          defaultgaps,            {0} },
 };
 
 /* button definitions */
 /* click can be ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
 static Button buttons[] = {
     /* click                event mask           button          function        argument */
-	{ ClkButton,		0,		Button1,	spawn,		SHCMD("dmenuunicode") },
-	{ ClkButton,		0,		Button2,	spawn,		{.v = dmenucmd } },
+	{ ClkButton,		0,		Button1,	spawn,		SHCMD("xmenu.sh") },
+	{ ClkButton,		0,		Button2,	spawn,		SHCMD("xmenu2.sh")},
 	{ ClkButton,		0,		Button3,	spawn,		{.v = dmenucmd } },
 
     { ClkWinTitle,          0,                   Button2,        zoom,           {0} },
