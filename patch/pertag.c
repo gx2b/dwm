@@ -1,15 +1,15 @@
 struct Pertag {
 	unsigned int curtag, prevtag; /* current and previous tag */
-	int nmasters[LENGTH(tags) + 1]; /* number of windows in master area */
-	int nstacks[LENGTH(tags) + 1]; /* number of windows in primary stack area */
-	int ltaxis[LENGTH(tags) + 1][LTAXIS_LAST];
-	const Layout *ltidxs[LENGTH(tags) + 1][3]; /* matrix of tags and layouts indexes  */
-	float mfacts[LENGTH(tags) + 1]; /* mfacts per tag */
-	unsigned int sellts[LENGTH(tags) + 1]; /* selected layouts */
-	int showbars[LENGTH(tags) + 1]; /* display bar for the current tag */
-	Client *prevclient[LENGTH(tags) + 1];
-	Client *prevzooms[LENGTH(tags) + 1]; /* store zoom information */
-	int enablegaps[LENGTH(tags) + 1];
+	int nmasters[NUMTAGS + 1]; /* number of windows in master area */
+	int nstacks[NUMTAGS + 1]; /* number of windows in primary stack area */
+	int ltaxis[NUMTAGS + 1][LTAXIS_LAST];
+	const Layout *ltidxs[NUMTAGS + 1][3]; /* matrix of tags and layouts indexes  */
+	float mfacts[NUMTAGS + 1]; /* mfacts per tag */
+	unsigned int sellts[NUMTAGS + 1]; /* selected layouts */
+	int showbars[NUMTAGS + 1]; /* display bar for the current tag */
+	Client *prevclient[NUMTAGS + 1];
+	Client *prevzooms[NUMTAGS + 1]; /* store zoom information */
+	int enablegaps[NUMTAGS + 1];
 };
 
 void
@@ -17,11 +17,10 @@ pertagview(const Arg *arg)
 {
 	int i;
 	unsigned int tmptag;
-
 	if (arg->ui & TAGMASK) {
 		selmon->pertag->prevtag = selmon->pertag->curtag;
 		selmon->tagset[selmon->seltags] = arg->ui & TAGMASK;
-		if (arg->ui == ~0)
+		if (arg->ui == ~SPTAGMASK)
 			selmon->pertag->curtag = 0;
 		else {
 			for (i = 0; !(arg->ui & 1 << i); i++) ;
@@ -38,6 +37,7 @@ pertagview(const Arg *arg)
 	selmon->sellt = selmon->pertag->sellts[selmon->pertag->curtag];
 	selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt];
 	selmon->lt[selmon->sellt^1] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt^1];
+
 	selmon->ltaxis[LAYOUT] = selmon->pertag->ltaxis[selmon->pertag->curtag][LAYOUT];
 	selmon->ltaxis[MASTER] = selmon->pertag->ltaxis[selmon->pertag->curtag][MASTER];
 	selmon->ltaxis[STACK]  = selmon->pertag->ltaxis[selmon->pertag->curtag][STACK];

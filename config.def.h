@@ -3,52 +3,119 @@
 /* appearance */
 static const unsigned int borderpx       = 1;   /* border pixel of windows */
 static const unsigned int snap           = 32;  /* snap pixel */
+static const int swallowfloating         = 0;   /* 1 means swallow floating windows by default */
 static const unsigned int gappih         = 20;  /* horiz inner gap between windows */
 static const unsigned int gappiv         = 10;  /* vert inner gap between windows */
 static const unsigned int gappoh         = 10;  /* horiz outer gap between windows and screen edge */
 static const unsigned int gappov         = 30;  /* vert outer gap between windows and screen edge */
 static const int smartgaps               = 0;   /* 1 means no outer gap when there is only one window */
+static const char autostartblocksh[]     = "autostart_blocking.sh";
+static const char autostartsh[]          = "autostart.sh";
+static const char dwmdir[]               = "dwm";
+static const char localshare[]           = ".local/share";
 static const int showbar                 = 1;   /* 0 means no bar */
 static const int topbar                  = 1;   /* 0 means bottom bar */
-static const int vertpad                 = 10;  /* vertical padding of bar */
-static const int sidepad                 = 10;  /* horizontal padding of bar */
-static const int horizpadbar             = 2;   /* horizontal padding for statusbar */
-static const int vertpadbar              = 0;   /* vertical padding for statusbar */
 static const char buttonbar[]            = "<O>";
-static const char *fonts[]               = { "monospace:size=10" };
+/* Indicators: see patch/bar_indicators.h for options */
+static int tagindicatortype              = INDICATOR_TOP_LEFT_SQUARE;
+static int floatindicatortype            = INDICATOR_TOP_LEFT_SQUARE;
+static const char font[]                 = "monospace 10";
 static const char dmenufont[]            = "monospace:size=10";
 
 static char normfgcolor[]                = "#bbbbbb";
 static char normbgcolor[]                = "#222222";
 static char normbordercolor[]            = "#444444";
+static char normfloatcolor[]             = "#db8fd9";
 
 static char selfgcolor[]                 = "#eeeeee";
 static char selbgcolor[]                 = "#005577";
 static char selbordercolor[]             = "#005577";
+static char selfloatcolor[]              = "#005577";
+
+static char titlenormfgcolor[]           = "#bbbbbb";
+static char titlenormbgcolor[]           = "#222222";
+static char titlenormbordercolor[]       = "#444444";
+static char titlenormfloatcolor[]        = "#db8fd9";
+
+static char titleselfgcolor[]            = "#eeeeee";
+static char titleselbgcolor[]            = "#005577";
+static char titleselbordercolor[]        = "#005577";
+static char titleselfloatcolor[]         = "#005577";
+
+static char tagsnormfgcolor[]            = "#bbbbbb";
+static char tagsnormbgcolor[]            = "#222222";
+static char tagsnormbordercolor[]        = "#444444";
+static char tagsnormfloatcolor[]         = "#db8fd9";
+
+static char tagsselfgcolor[]             = "#eeeeee";
+static char tagsselbgcolor[]             = "#005577";
+static char tagsselbordercolor[]         = "#005577";
+static char tagsselfloatcolor[]          = "#005577";
+
+static char hidfgcolor[]                 = "#005577";
+static char hidbgcolor[]                 = "#222222";
+static char hidbordercolor[]             = "#005577";
+static char hidfloatcolor[]              = "#f76e0c";
+
+static char urgfgcolor[]                 = "#bbbbbb";
+static char urgbgcolor[]                 = "#222222";
+static char urgbordercolor[]             = "#ff0000";
+static char urgfloatcolor[]              = "#db8fd9";
 
 
 
-
-
-static
-char *colors[][ColCount] = {
-	/*                fg            bg            border          */
-	[SchemeNorm]  = { normfgcolor,  normbgcolor,  normbordercolor },
-	[SchemeSel]   = { selfgcolor,   selbgcolor,   selbordercolor  },
+static char *colors[][ColCount] = {
+	/*                       fg                bg                border                float */
+	[SchemeNorm]         = { normfgcolor,      normbgcolor,      normbordercolor,      normfloatcolor },
+	[SchemeSel]          = { selfgcolor,       selbgcolor,       selbordercolor,       selfloatcolor },
+	[SchemeTitleNorm]    = { titlenormfgcolor, titlenormbgcolor, titlenormbordercolor, titlenormfloatcolor },
+	[SchemeTitleSel]     = { titleselfgcolor,  titleselbgcolor,  titleselbordercolor,  titleselfloatcolor },
+	[SchemeTagsNorm]     = { tagsnormfgcolor,  tagsnormbgcolor,  tagsnormbordercolor,  tagsnormfloatcolor },
+	[SchemeTagsSel]      = { tagsselfgcolor,   tagsselbgcolor,   tagsselbordercolor,   tagsselfloatcolor },
+	[SchemeHid]          = { hidfgcolor,       hidbgcolor,       hidbordercolor,       hidfloatcolor },
+	[SchemeUrg]          = { urgfgcolor,       urgbgcolor,       urgbordercolor,       urgfloatcolor },
 };
 
+
+
 const char *spcmd1[] = {"st", "-n", "spterm", "-g", "120x34", NULL };
-const char *spcmd2[] = {"st", "-n", "spfm", "-g", "144x41", "-e", "ranger", NULL };
-const char *spcmd3[] = {"keepassxc", NULL };
 static Sp scratchpads[] = {
    /* name          cmd  */
    {"spterm",      spcmd1},
-   {"spranger",    spcmd2},
-   {"keepassxc",   spcmd3},
 };
 
-/* tagging */
-static char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+/* Tags
+ * In a traditional dwm the number of tags in use can be changed simply by changing the number
+ * of strings in the tags array. This build does things a bit different which has some added
+ * benefits. If you need to change the number of tags here then change the NUMTAGS macro in dwm.c.
+ *
+ * Examples:
+ *
+ *  1) static char *tagicons[][NUMTAGS*2] = {
+ *         [DEFAULT_TAGS] = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "G", "H", "I" },
+ *     }
+ *
+ *  2) static char *tagicons[][1] = {
+ *         [DEFAULT_TAGS] = { "•" },
+ *     }
+ *
+ * The first example would result in the tags on the first monitor to be 1 through 9, while the
+ * tags for the second monitor would be named A through I. A third monitor would start again at
+ * 1 through 9 while the tags on a fourth monitor would also be named A through I. Note the tags
+ * count of NUMTAGS*2 in the array initialiser which defines how many tag text / icon exists in
+ * the array. This can be changed to *3 to add separate icons for a third monitor.
+ *
+ * For the second example each tag would be represented as a bullet point. Both cases work the
+ * same from a technical standpoint - the icon index is derived from the tag index and the monitor
+ * index. If the icon index is is greater than the number of tag icons then it will wrap around
+ * until it an icon matches. Similarly if there are two tag icons then it would alternate between
+ * them. This works seamlessly with alternative tags and alttagsdecoration patches.
+ */
+static char *tagicons[][NUMTAGS] = {
+	[DEFAULT_TAGS]        = { "1", "2", "3", "4", "5", "6", "7", "8", "9" },
+	[ALTERNATIVE_TAGS]    = { "A", "B", "C", "D", "E", "F", "G", "H", "I" },
+	[ALT_TAGS_DECORATION] = { "<1>", "<2>", "<3>", "<4>", "<5>", "<6>", "<7>", "<8>", "<9>" },
+};
 
 
 /* There are two options when it comes to per-client rules:
@@ -83,8 +150,6 @@ static const Rule rules[] = {
 	RULE(.class = "Gimp", .tags = 1 << 4)
 	RULE(.class = "Firefox", .tags = 1 << 7)
 	RULE(.instance = "spterm", .tags = SPTAG(0), .isfloating = 1)
-	RULE(.instance = "spfm", .tags = SPTAG(1), .isfloating = 1)
-	RULE(.instance = "keepassxc", .tags = SPTAG(2))
 };
 
 static const MonitorRule monrules[] = {
@@ -93,72 +158,34 @@ static const MonitorRule monrules[] = {
 	{  -1,      -1,   0,      -1,    -1,      -1,      -1     }, // default
 };
 
-/* signal definitions */
-/* signum must be greater than 0 */
-/* trigger signals using `xsetroot -name "fsignal:<signame> [<type> <value>]"` */
-static Signal signals[] = {
-	/* signum                    function */
-	{ "focusstack",              focusstack },
-	{ "setmfact",                setmfact },
-	{ "togglebar",               togglebar },
-	{ "incnmaster",              incnmaster },
-	{ "togglefloating",          togglefloating },
-	{ "focusmon",                focusmon },
-	{ "swapfocus",               swapfocus },
-	{ "inplacerotate",           inplacerotate },
-	{ "incnstack",               incnstack },
-	{ "rotatelayoutaxis",        rotatelayoutaxis },
-	{ "setlayoutaxisex",         setlayoutaxisex },
-	{ "mirrorlayout",            mirrorlayout },
-	{ "tagmon",                  tagmon },
-	{ "zoom",                    zoom },
-	{ "incrgaps",                incrgaps },
-	{ "incrigaps",               incrigaps },
-	{ "incrogaps",               incrogaps },
-	{ "incrihgaps",              incrihgaps },
-	{ "incrivgaps",              incrivgaps },
-	{ "incrohgaps",              incrohgaps },
-	{ "incrovgaps",              incrovgaps },
-	{ "togglegaps",              togglegaps },
-	{ "defaultgaps",             defaultgaps },
-	{ "setgaps",                 setgapsex },
-	{ "view",                    view },
-	{ "viewall",                 viewallex },
-	{ "viewex",                  viewex },
-	{ "toggleview",              view },
-	{ "shiftview",               shiftview },
-	{ "shiftviewclients",        shiftviewclients },
-	{ "togglesticky",            togglesticky },
-	{ "cyclelayout",             cyclelayout },
-	{ "toggleviewex",            toggleviewex },
-	{ "tag",                     tag },
-	{ "tagall",                  tagallex },
-	{ "tagex",                   tagex },
-	{ "toggletag",               tag },
-	{ "toggletagex",             toggletagex },
-	{ "tagallmon",               tagallmon },
-	{ "tagswapmon",              tagswapmon},
-	{ "fullscreen",              fullscreen },
-	{ "togglescratch",           togglescratch },
-	{ "killclient",              killclient },
-	{ "winview",                 winview },
-	{ "xrdb",                    xrdb },
-	{ "tagnextmonex",            tagnextmonex },
-	{ "tagprevmonex",            tagprevmonex },
-	{ "quit",                    quit },
-	{ "setlayout",               setlayout },
-	{ "setlayoutex",             setlayoutex },
+
+/* Bar rules allow you to configure what is shown where on the bar, as well as
+ * introducing your own bar modules.
+ *
+ *    monitor:
+ *      -1  show on all monitors
+ *       0  show on monitor 0
+ *      'A' show on active monitor (i.e. focused / selected) (or just -1 for active?)
+ *    bar - bar index, 0 is default, 1 is extrabar
+ *    alignment - how the module is aligned compared to other modules
+ *    widthfunc, drawfunc, clickfunc - providing bar module width, draw and click functions
+ *    name - does nothing, intended for visual clue and for logging / debugging
+ */
+static const BarRule barrules[] = {
+	/* monitor  bar    alignment         widthfunc                drawfunc                clickfunc                name */
+	{ -1,       0,     BAR_ALIGN_LEFT,   width_stbutton,          draw_stbutton,          click_stbutton,          "statusbutton" },
+	{ -1,       0,     BAR_ALIGN_LEFT,   width_tags,              draw_tags,              click_tags,              "tags" },
+	{ -1,       0,     BAR_ALIGN_LEFT,   width_ltsymbol,          draw_ltsymbol,          click_ltsymbol,          "layout" },
+	{  0,       0,     BAR_ALIGN_RIGHT,  width_status,            draw_status,            click_statuscmd,         "status" },
+	{ -1,       0,     BAR_ALIGN_NONE,   width_awesomebar,        draw_awesomebar,        click_awesomebar,        "awesomebar" },
 };
 
 /* layout(s) */
 static const float mfact     = 0.55; /* factor of master area size [0.05..0.95] */
 static const int nmaster     = 1;    /* number of clients in master area */
 static const int nstack      = 0;    /* number of clients in primary stack area */
-static const int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
+static const int resizehints = 0;    /* 1 means respect size hints in tiled resizals */
 
-
-/* Position of the monocle layout in the layouts variable, used by warp and fullscreen patches */
-#define MONOCLE_LAYOUT_POS 2
 
 static const Layout layouts[] = {
 	/* symbol     arrange function, { nmaster, nstack, layout, master axis, stack axis, secondary stack axis } */
@@ -208,6 +235,12 @@ static const char *dmenucmd[] = {
 static const char *termcmd[]  = { "st", NULL };
 
 
+static const char* firefoxcmd[] = {"firefox", NULL};
+static Key on_empty_keys[] = {
+	/* modifier key            function                argument */
+	{ 0,        XK_f,          spawn,                  {.v = firefoxcmd } },
+};
+
 static Key keys[] = {
 	/* modifier                     key            function                argument */
 	{ MODKEY,                       XK_p,          spawn,                  {.v = dmenucmd } },
@@ -256,6 +289,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_backslash,  shiftview,              { .i = +1 } },
 	{ MODKEY|Mod4Mask,              XK_Tab,        shiftviewclients,       { .i = -1 } },
 	{ MODKEY|Mod4Mask,              XK_backslash,  shiftviewclients,       { .i = +1 } },
+	{ MODKEY|ControlMask,           XK_z,          showhideclient,         {0} },
 	{ MODKEY|ShiftMask,             XK_c,          killclient,             {0} },
 	{ MODKEY|ShiftMask,             XK_q,          quit,                   {0} },
 	{ MODKEY|ControlMask|ShiftMask, XK_q,          quit,                   {1} },
@@ -272,16 +306,17 @@ static Key keys[] = {
 	{ MODKEY|Mod5Mask,              XK_Tab,        rotatelayoutaxis,       {.i = -2 } },   /* flextile, 2 = master axis */
 	{ MODKEY|Mod5Mask|ShiftMask,    XK_Tab,        rotatelayoutaxis,       {.i = -3 } },   /* flextile, 3 = stack axis */
 	{ MODKEY|Mod5Mask|Mod1Mask,     XK_Tab,        rotatelayoutaxis,       {.i = -4 } },   /* flextile, 4 = secondary stack axis */
-	{ MODKEY|ControlMask,           XK_Return,     mirrorlayout,           {0} },         /* flextile, flip master and stack areas */
+	{ MODKEY|ControlMask,           XK_Return,     mirrorlayout,           {0} },          /* flextile, flip master and stack areas */
 	{ MODKEY,                       XK_space,      setlayout,              {0} },
 	{ MODKEY|ShiftMask,             XK_space,      togglefloating,         {0} },
 	{ MODKEY,                       XK_grave,      togglescratch,          {.ui = 0 } },
-	{ MODKEY|ControlMask,           XK_grave,      togglescratch,          {.ui = 1 } },
-	{ MODKEY|ShiftMask,             XK_grave,      togglescratch,          {.ui = 2 } },
+	{ MODKEY|ControlMask,           XK_grave,      setscratch,             {.ui = 0 } },
+	{ MODKEY|ShiftMask,             XK_grave,      removescratch,          {.ui = 0 } },
+	{ MODKEY,                       XK_y,          togglefullscreen,       {0} },
 	{ MODKEY|ShiftMask,             XK_f,          fullscreen,             {0} },
 	{ MODKEY|ShiftMask,             XK_s,          togglesticky,           {0} },
-	{ MODKEY,                       XK_0,          view,                   {.ui = ~0 } },
-	{ MODKEY|ShiftMask,             XK_0,          tag,                    {.ui = ~0 } },
+	{ MODKEY,                       XK_0,          view,                   {.ui = ~SPTAGMASK } },
+	{ MODKEY|ShiftMask,             XK_0,          tag,                    {.ui = ~SPTAGMASK } },
 	{ MODKEY,                       XK_comma,      focusmon,               {.i = -1 } },
 	{ MODKEY,                       XK_period,     focusmon,               {.i = +1 } },
 	{ MODKEY|ShiftMask,             XK_comma,      tagmon,                 {.i = -1 } },
@@ -305,12 +340,14 @@ static Key keys[] = {
 
 
 /* button definitions */
-/* click can be ClkButton, ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
+/* click can be ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
 static Button buttons[] = {
 	/* click                event mask           button          function        argument */
 	{ ClkButton,            0,                   Button1,        spawn,          {.v = dmenucmd } },
 	{ ClkLtSymbol,          0,                   Button1,        setlayout,      {0} },
 	{ ClkLtSymbol,          0,                   Button3,        setlayout,      {.v = &layouts[2]} },
+	{ ClkWinTitle,          0,                   Button1,        togglewin,      {0} },
+	{ ClkWinTitle,          0,                   Button3,        showhideclient, {0} },
 	{ ClkWinTitle,          0,                   Button2,        zoom,           {0} },
 	{ ClkStatusText,        0,                   Button1,        sigdwmblocks,   {.i = 1 } },
 	{ ClkStatusText,        0,                   Button2,        sigdwmblocks,   {.i = 2 } },
@@ -323,3 +360,62 @@ static Button buttons[] = {
 	{ ClkTagBar,            MODKEY,              Button1,        tag,            {0} },
 	{ ClkTagBar,            MODKEY,              Button3,        toggletag,      {0} },
 };
+
+/* signal definitions */
+/* signum must be greater than 0 */
+/* trigger signals using `xsetroot -name "fsignal:<signame> [<type> <value>]"` */
+static Signal signals[] = {
+	/* signum                    function */
+	{ "focusstack",              focusstack },
+	{ "setmfact",                setmfact },
+	{ "togglebar",               togglebar },
+	{ "incnmaster",              incnmaster },
+	{ "togglefloating",          togglefloating },
+	{ "focusmon",                focusmon },
+	{ "swapfocus",               swapfocus },
+	{ "inplacerotate",           inplacerotate },
+	{ "incnstack",               incnstack },
+	{ "rotatelayoutaxis",        rotatelayoutaxis },
+	{ "setlayoutaxisex",         setlayoutaxisex },
+	{ "mirrorlayout",            mirrorlayout },
+	{ "tagmon",                  tagmon },
+	{ "zoom",                    zoom },
+	{ "incrgaps",                incrgaps },
+	{ "incrigaps",               incrigaps },
+	{ "incrogaps",               incrogaps },
+	{ "incrihgaps",              incrihgaps },
+	{ "incrivgaps",              incrivgaps },
+	{ "incrohgaps",              incrohgaps },
+	{ "incrovgaps",              incrovgaps },
+	{ "togglegaps",              togglegaps },
+	{ "defaultgaps",             defaultgaps },
+	{ "setgaps",                 setgapsex },
+	{ "view",                    view },
+	{ "viewall",                 viewallex },
+	{ "viewex",                  viewex },
+	{ "toggleview",              toggleview },
+	{ "shiftview",               shiftview },
+	{ "shiftviewclients",        shiftviewclients },
+	{ "togglesticky",            togglesticky },
+	{ "cyclelayout",             cyclelayout },
+	{ "toggleviewex",            toggleviewex },
+	{ "tag",                     tag },
+	{ "tagall",                  tagallex },
+	{ "tagex",                   tagex },
+	{ "toggletag",               toggletag },
+	{ "toggletagex",             toggletagex },
+	{ "tagallmon",               tagallmon },
+	{ "tagswapmon",              tagswapmon},
+	{ "togglefullscreen",        togglefullscreen },
+	{ "fullscreen",              fullscreen },
+	{ "togglescratch",           togglescratch },
+	{ "killclient",              killclient },
+	{ "winview",                 winview },
+	{ "xrdb",                    xrdb },
+	{ "tagnextmonex",            tagnextmonex },
+	{ "tagprevmonex",            tagprevmonex },
+	{ "quit",                    quit },
+	{ "setlayout",               setlayout },
+	{ "setlayoutex",             setlayoutex },
+};
+

@@ -13,7 +13,7 @@ viewex(const Arg *arg)
 void
 viewallex(const Arg *arg)
 {
-	view(&((Arg){.ui = ~0}));
+	view(&((Arg){.ui = ~SPTAGMASK}));
 }
 
 void
@@ -37,7 +37,7 @@ toggletagex(const Arg *arg)
 void
 tagallex(const Arg *arg)
 {
-	tag(&((Arg){.ui = ~0}));
+	tag(&((Arg){.ui = ~SPTAGMASK}));
 }
 
 int

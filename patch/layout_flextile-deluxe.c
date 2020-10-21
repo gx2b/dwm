@@ -64,7 +64,7 @@ setlayoutaxisex(const Arg *arg)
 	int axis, arr;
 
 	axis = arg->i & 0x3; // lower two bytes indicates layout, master or stack1-2
-	arr = ((arg->i & 0xFC) >> 2); // remaining six upper bytes indicates arrangement
+	arr = ((arg->i & 0xFC) >> 2); // remaining six upper bytes indicate arrangement
 
 	if ((axis == 0 && abs(arr) > LAYOUT_LAST)
 			|| (axis > 0 && (arr > AXIS_LAST || arr < 0)))
@@ -486,7 +486,7 @@ arrange_gapplessgrid_alt1(Monitor *m, int x, int y, int h, int w, int ih, int iv
 	rest = (h - ih * (rows - 1)) - ch * rows;
 
 	for (i = 0; i < rows; i++) {
-		arrange_left_to_right(m, x, y, ch + (i < rest ? 1 : 0), w, ih, iv, n, cols, ai + i*cols);
+		arrange_left_to_right(m, x, y, ch + (i < rest ? 1 : 0), w, ih, iv, n, MIN(cols, an - i*cols), ai + i*cols);
 		y += ch + (i < rest ? 1 : 0) + ih;
 	}
 }
@@ -506,7 +506,7 @@ arrange_gapplessgrid_alt2(Monitor *m, int x, int y, int h, int w, int ih, int iv
 	rest = (w - iv * (cols - 1)) - cw * cols;
 
 	for (i = 0; i < cols; i++) {
-		arrange_top_to_bottom(m, x, y, h, cw + (i < rest ? 1 : 0), ih, iv, n, rows, ai + i*rows);
+		arrange_top_to_bottom(m, x, y, h, cw + (i < rest ? 1 : 0), ih, iv, n, MIN(rows, an - i*rows), ai + i*rows);
 		x += cw + (i < rest ? 1 : 0) + iv;
 	}
 }
