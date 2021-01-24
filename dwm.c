@@ -75,6 +75,7 @@
 
 /* enums */
 enum {
+	CurIronCross,
 	CurNormal,
 	CurResize,
 	CurMove,
@@ -96,7 +97,8 @@ enum {
 	NetSupported, NetWMName, NetWMState, NetWMCheck,
 	NetWMFullscreen, NetActiveWindow, NetWMWindowType,
 	NetDesktopNames, NetDesktopViewport, NetNumberOfDesktops, NetCurrentDesktop,
-	NetClientList, NetLast
+	NetClientList,
+	NetLast
 }; /* EWMH atoms */
 
 enum {
@@ -188,6 +190,7 @@ typedef struct Client Client;
 struct Client {
 	char name[256];
 	float mina, maxa;
+	float cfact;
 	int x, y, w, h;
 	int sfx, sfy, sfw, sfh; /* stored float geometry, used on mode revert */
 	int oldx, oldy, oldw, oldh;
@@ -195,6 +198,7 @@ struct Client {
 	int bw, oldbw;
 	unsigned int tags;
 	int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen;
+	int beingmoved;
 	int isterminal, noswallow;
 	pid_t pid;
 	int issteam;
@@ -420,7 +424,6 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[UnmapNotify] = unmapnotify
 };
 static Atom wmatom[WMLast], netatom[NetLast];
-static int isempty = 0;
 static int running = 1;
 static Cur *cursor[CurLast];
 static Clr **scheme;
@@ -718,6 +721,7 @@ clientmessage(XEvent *e)
 {
 	XClientMessageEvent *cme = &e->xclient;
 	Client *c = wintoclient(cme->window);
+	unsigned int i;
 
 
 	if (!c)
@@ -731,8 +735,20 @@ clientmessage(XEvent *e)
 			)));
 		}
 	} else if (cme->message_type == netatom[NetActiveWindow]) {
-		if (c != selmon->sel && !c->isurgent)
-			seturgent(c, 1);
+		if (c->tags & c->mon->tagset[c->mon->seltags])
+			focus(c);
+		else {
+			for (i = 0; i < NUMTAGS && !((1 << i) & c->tags); i++);
+			if (i < NUMTAGS) {
+				if (c != selmon->sel)
+					unfocus(selmon->sel, 0, NULL);
+				selmon = c->mon;
+				if (((1 << i) & TAGMASK) != selmon->tagset[selmon->seltags])
+					view(&((Arg) { .ui = 1 << i }));
+				focus(c);
+				restack(selmon);
+			}
+		}
 	}
 }
 
@@ -769,7 +785,7 @@ configurenotify(XEvent *e)
 		sw = ev->width;
 		sh = ev->height;
 		if (updategeom() || dirty) {
-			drw_resize(drw, sw, bh);
+			drw_resize(drw, sw, sh);
 			updatebars();
 			for (m = mons; m; m = m->next) {
 				for (c = m->clients; c; c = c->next)
@@ -1018,7 +1034,7 @@ drawbars(void)
 void
 drawbarwin(Bar *bar)
 {
-	if (!bar->win || bar->external)
+	if (!bar || !bar->win || bar->external)
 		return;
 	int r, w, total_drawn = 0;
 	int rx, lx, rw, lw; // bar size, split between left and right if a center module is added
@@ -1192,10 +1208,6 @@ focus(Client *c)
 	selmon->sel = c;
 	drawbars();
 
-	if ((isempty && selmon->sel) || (!isempty && !selmon->sel)) {
-		isempty = !isempty;
-		grabkeys();
-	}
 }
 
 /* there are some broken focus acquiring clients needing extra handling */
@@ -1354,12 +1366,6 @@ grabkeys(void)
 				for (j = 0; j < LENGTH(modifiers); j++)
 					XGrabKey(dpy, code, keys[i].mod | modifiers[j], root,
 						True, GrabModeAsync, GrabModeAsync);
-		if (!selmon->sel)
-			for (i = 0; i < LENGTH(on_empty_keys); i++)
-				if ((code = XKeysymToKeycode(dpy, on_empty_keys[i].keysym)))
-					for (j = 0; j < LENGTH(modifiers); j++)
-						XGrabKey(dpy, code, on_empty_keys[i].mod | modifiers[j], root,
-								True, GrabModeAsync, GrabModeAsync);
 	}
 }
 
@@ -1397,12 +1403,6 @@ keypress(XEvent *e)
 				&& CLEANMASK(keys[i].mod) == CLEANMASK(ev->state)
 				&& keys[i].func)
 			keys[i].func(&(keys[i].arg));
-	if (!selmon->sel)
-		for (i = 0; i < LENGTH(on_empty_keys); i++)
-			if (*keysym == on_empty_keys[i].keysym
-					&& CLEANMASK(on_empty_keys[i].mod) == CLEANMASK(ev->state)
-					&& on_empty_keys[i].func)
-				on_empty_keys[i].func(&(on_empty_keys[i].arg));
 	XFree(keysym);
 }
 
@@ -1441,6 +1441,7 @@ manage(Window w, XWindowAttributes *wa)
 	c->w = c->oldw = wa->width;
 	c->h = c->oldh = wa->height;
 	c->oldbw = wa->border_width;
+	c->cfact = 1.0;
 	updatetitle(c);
 	if (XGetTransientForHint(dpy, w, &trans) && (t = wintoclient(trans))) {
 		c->mon = t->mon;
@@ -2037,6 +2038,7 @@ setup(void)
 	/* init cursors */
 	cursor[CurNormal] = drw_cur_create(drw, XC_left_ptr);
 	cursor[CurResize] = drw_cur_create(drw, XC_sizing);
+	cursor[CurIronCross] = drw_cur_create(drw, XC_iron_cross);
 	cursor[CurMove] = drw_cur_create(drw, XC_fleur);
 	/* init appearance */
 	scheme = ecalloc(LENGTH(colors), sizeof(Clr *));
@@ -2427,6 +2429,7 @@ updateclientlist()
 			XChangeProperty(dpy, root, netatom[NetClientList],
 				XA_WINDOW, 32, PropModeAppend,
 				(unsigned char *) &(c->win), 1);
+
 }
 
 int
