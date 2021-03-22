@@ -27,6 +27,7 @@
 #include "pertag.h"
 #include "placemouse.h"
 #include "restartsig.h"
+#include "riodraw.h"
 #include "scratchpad.h"
 #include "shiftview.h"
 #include "shiftviewclients.h"

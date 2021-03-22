@@ -361,6 +361,7 @@ static void seturgent(Client *c, int urg);
 static void showhide(Client *c);
 static void sigchld(int unused);
 static void spawn(const Arg *arg);
+static pid_t spawncmd(const Arg *arg);
 static void tag(const Arg *arg);
 static void tagmon(const Arg *arg);
 static void togglebar(const Arg *arg);
@@ -407,6 +408,8 @@ static int lrpad;            /* sum of left and right padding for text */
 static int ignoreconfigurerequests = 0;
 static int (*xerrorxlib)(Display *, XErrorEvent *);
 static unsigned int numlockmask = 0;
+static int riodimensions[4] = { -1, -1, -1, -1 };
+static pid_t riopid = 0;
 static void (*handler[LASTEvent]) (XEvent *) = {
 	[ButtonPress] = buttonpress,
 	[ClientMessage] = clientmessage,
@@ -639,6 +642,7 @@ buttonpress(XEvent *e)
 		}
 	}
 
+
 	if (click == ClkRootWin && (c = wintoclient(ev->window))) {
 		focus(c);
 		restack(selmon);
@@ -649,7 +653,12 @@ buttonpress(XEvent *e)
 	for (i = 0; i < LENGTH(buttons); i++) {
 		if (click == buttons[i].click && buttons[i].func && buttons[i].button == ev->button
 				&& CLEANMASK(buttons[i].mask) == CLEANMASK(ev->state)) {
-			buttons[i].func((click == ClkTagBar || click == ClkWinTitle) && buttons[i].arg.i == 0 ? &arg : &buttons[i].arg);
+			buttons[i].func(
+				(
+					click == ClkTagBar
+					|| click == ClkWinTitle
+				) && buttons[i].arg.i == 0 ? &arg : &buttons[i].arg
+			);
 		}
 	}
 }
@@ -1177,8 +1186,9 @@ expose(XEvent *e)
 	Monitor *m;
 	XExposeEvent *ev = &e->xexpose;
 
-	if (ev->count == 0 && (m = wintomon(ev->window)))
+	if (ev->count == 0 && (m = wintomon(ev->window))) {
 		drawbar(m);
+	}
 }
 
 void
@@ -1502,6 +1512,14 @@ manage(Window w, XWindowAttributes *wa)
 		unfocus(selmon->sel, 0, c);
 	c->mon->sel = c;
 	if (!(term && swallow(term, c))) {
+		if (riopid && (!riodraw_matchpid || isdescprocess(riopid, c->pid))) {
+			if (riodimensions[3] != -1)
+				rioposition(c, riodimensions[0], riodimensions[1], riodimensions[2], riodimensions[3]);
+			else {
+				killclient(&((Arg) { .v = c }));
+				return;
+			}
+		}
 		arrange(c->mon);
 		if (!HIDDEN(c))
 			XMapWindow(dpy, c->win);
@@ -2053,7 +2071,7 @@ setup(void)
 	XChangeProperty(dpy, wmcheckwin, netatom[NetWMCheck], XA_WINDOW, 32,
 		PropModeReplace, (unsigned char *) &wmcheckwin, 1);
 	XChangeProperty(dpy, wmcheckwin, netatom[NetWMName], utf8string, 8,
-		PropModeReplace, (unsigned char *) "dwm", 3);
+		PropModeReplace, (unsigned char *) "LG3D", 4);
 	XChangeProperty(dpy, root, netatom[NetWMCheck], XA_WINDOW, 32,
 		PropModeReplace, (unsigned char *) &wmcheckwin, 1);
 	/* EWMH support per view */
@@ -2139,10 +2157,18 @@ sigchld(int unused)
 void
 spawn(const Arg *arg)
 {
+	spawncmd(arg);
+}
+
+pid_t
+spawncmd(const Arg *arg)
+{
+	pid_t pid;
 	if (arg->v == dmenucmd)
 		dmenumon[0] = '0' + selmon->num;
 
-	if (fork() == 0) {
+	if ((pid = fork()) == 0)
+	{
 		if (dpy)
 			close(ConnectionNumber(dpy));
 		setsid();
@@ -2151,6 +2177,7 @@ spawn(const Arg *arg)
 		perror(" failed");
 		exit(EXIT_SUCCESS);
 	}
+	return pid;
 }
 
 void
@@ -2387,6 +2414,7 @@ updatebars(void)
 void
 updatebarpos(Monitor *m)
 {
+
 	m->wx = m->mx;
 	m->wy = m->my;
 	m->ww = m->mw;
@@ -2404,6 +2432,8 @@ updatebarpos(Monitor *m)
 	for (bar = m->bar; bar; bar = bar->next)
 		if (!m->showbar || !bar->showbar)
 			bar->by = -bar->bh - y_pad;
+
+
 	if (!m->showbar)
 		return;
 	for (bar = m->bar; bar; bar = bar->next) {

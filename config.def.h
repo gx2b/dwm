@@ -15,6 +15,10 @@ static const char dwmdir[]               = "dwm";
 static const char localshare[]           = ".local/share";
 static const int showbar                 = 1;   /* 0 means no bar */
 static const int topbar                  = 1;   /* 0 means bottom bar */
+static const char slopspawnstyle[]       = "-t 0 -c 0.92,0.85,0.69,0.3 -o"; /* do NOT define -f (format) here */
+static const char slopresizestyle[]      = "-t 0 -c 0.92,0.85,0.69,0.3"; /* do NOT define -f (format) here */
+static const int riodraw_borders         = 0;  /* 0 or 1, indicates whether the area drawn using slop includes the window borders */
+static const int riodraw_matchpid        = 1;  /* 0 or 1, indicates whether to match the PID of the client that was spawned with riospawn */
 static const char buttonbar[]            = "<O>";
 /* Indicators: see patch/bar_indicators.h for options */
 static int tagindicatortype              = INDICATOR_TOP_LEFT_SQUARE;
@@ -205,6 +209,7 @@ static const Layout layouts[] = {
 	{ ":::",      flextile,         { -1, -1, NO_SPLIT, GAPPLESSGRID, GAPPLESSGRID, 0, NULL } }, // gappless grid
 	{ "[\\]",     flextile,         { -1, -1, NO_SPLIT, DWINDLE, DWINDLE, 0, NULL } }, // fibonacci dwindle
 	{ "(@)",      flextile,         { -1, -1, NO_SPLIT, SPIRAL, SPIRAL, 0, NULL } }, // fibonacci spiral
+	{ "[T]",      flextile,         { -1, -1, SPLIT_VERTICAL, LEFT_TO_RIGHT, TATAMI, 0, NULL } }, // tatami mats
 	{ NULL,       NULL,             {0} },
 };
 
@@ -244,6 +249,9 @@ static Key keys[] = {
 	/* modifier                     key            function                argument */
 	{ MODKEY,                       XK_p,          spawn,                  {.v = dmenucmd } },
 	{ MODKEY|ShiftMask,             XK_Return,     spawn,                  {.v = termcmd } },
+	{ MODKEY|ControlMask,           XK_p,          riospawnsync,           {.v = dmenucmd } },
+	{ MODKEY|ControlMask,           XK_Return,     riospawn,               {.v = termcmd } },
+	{ MODKEY,                       XK_s,          rioresize,              {0} },
 	{ MODKEY,                       XK_b,          togglebar,              {0} },
 	{ MODKEY,                       XK_j,          focusstack,             {.i = +1 } },
 	{ MODKEY,                       XK_k,          focusstack,             {.i = -1 } },
@@ -354,13 +362,17 @@ static Button buttons[] = {
 	{ ClkStatusText,        0,                   Button1,        sigdwmblocks,   {.i = 1 } },
 	{ ClkStatusText,        0,                   Button2,        sigdwmblocks,   {.i = 2 } },
 	{ ClkStatusText,        0,                   Button3,        sigdwmblocks,   {.i = 3 } },
-	{ ClkClientWin,         MODKEY,              Button1,        movemouse,      {0} },
 	/* placemouse options, choose which feels more natural:
 	 *    0 - tiled position is relative to mouse cursor
 	 *    1 - tiled postiion is relative to window center
 	 *    2 - mouse pointer warps to window center
+	 *
+	 * The moveorplace uses movemouse or placemouse depending on the floating state
+	 * of the selected client. Set up individual keybindings for the two if you want
+	 * to control these separately (i.e. to retain the feature to move a tiled window
+	 * into a floating position).
 	 */
-	{ ClkClientWin,         MODKEY|ControlMask,  Button1,        placemouse,     {.i = 1} },
+	{ ClkClientWin,         MODKEY,              Button1,        moveorplace,    {.i = 1} },
 	{ ClkClientWin,         MODKEY,              Button2,        togglefloating, {0} },
 	{ ClkClientWin,         MODKEY,              Button3,        resizemouse,    {0} },
 	{ ClkClientWin,         MODKEY|ShiftMask,    Button3,        dragcfact,      {0} },
